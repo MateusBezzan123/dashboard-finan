@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import styled from 'styled-components';
 import Sidebar from '../components/Sidebar';
@@ -6,10 +6,7 @@ import Filters from '../components/Filters';
 import Cards from '../components/Cards';
 import Charts from '../components/Charts';
 import { useFilters } from '../context/FiltersContext';
-
-interface ContentProps {
-  open: boolean;
-}
+import { GetServerSideProps } from 'next';
 
 interface Transaction {
   account: string;
@@ -31,7 +28,7 @@ const Container = styled.div`
   }
 `;
 
-const Content = styled.div<ContentProps>`
+const Content = styled.div<{ open: boolean }>`
   flex: 1;
   padding: 20px;
   margin-left: ${(props) => (props.open ? '250px' : '60px')};
@@ -43,9 +40,21 @@ const Content = styled.div<ContentProps>`
   }
 `;
 
-const transactionsData = require('../data/transactions.json') as Transaction[];
+export const getServerSideProps: GetServerSideProps = async ({ res }) => {
+  if (res) {
+    res.setHeader('Cache-Control', 'public, s-maxage=10, stale-while-revalidate=59');
+  }
 
-export default function Dashboard() {
+  const transactionsData = require('../data/transactions.json');
+
+  return {
+    props: {
+      transactionsData,
+    },
+  };
+}
+
+export default function Dashboard({ transactionsData }: { transactionsData: Transaction[] }) {
   const [auth, setAuth] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const router = useRouter();
@@ -60,19 +69,17 @@ export default function Dashboard() {
     }
   }, [router]);
 
-  const filteredTransactions = useMemo(() => {
-    return transactionsData.filter((t) => {
-      return (
-        (!filters.account || t.account === filters.account) &&
-        (!filters.industry || t.industry === filters.industry) &&
-        (!filters.state || t.state === filters.state) &&
-        (!filters.startDate || new Date(t.date) >= new Date(filters.startDate)) &&
-        (!filters.endDate || new Date(t.date) <= new Date(filters.endDate))
-      );
-    });
-  }, [filters]);
-
   if (!auth) return null;
+
+  const filteredTransactions = transactionsData.filter((t) => {
+    return (
+      (!filters.account || t.account === filters.account) &&
+      (!filters.industry || t.industry === filters.industry) &&
+      (!filters.state || t.state === filters.state) &&
+      (!filters.startDate || new Date(t.date) >= new Date(filters.startDate)) &&
+      (!filters.endDate || new Date(t.date) <= new Date(filters.endDate))
+    );
+  });
 
   return (
     <Container>
