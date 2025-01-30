@@ -1,4 +1,4 @@
-import React, { useState, useContext, useMemo, useCallback } from 'react';
+import React, { useState, useContext, useCallback } from 'react';
 import styled from 'styled-components';
 import { FiltersContext } from '../context/FiltersContext';
 
@@ -48,6 +48,24 @@ const ApplyButton = styled.button`
   }
 `;
 
+const ClearButton = styled.button`
+  padding: 8px 16px;
+  background: #ff4d4f;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+
+  &:hover {
+    background: #ff7875;
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
+`;
+
 export default function Filters() {
   const { filters, setFilters } = useContext(FiltersContext);
   const [localFilters, setLocalFilters] = useState(filters);
@@ -59,6 +77,18 @@ export default function Filters() {
   const handleApplyFilters = useCallback(() => {
     setFilters(localFilters);
   }, [localFilters, setFilters]);
+
+  const handleClearFilters = useCallback(() => {
+    const emptyFilters = {
+      account: '',
+      industry: '',
+      state: '',
+      startDate: '',
+      endDate: '',
+    };
+    setLocalFilters(emptyFilters); // Limpa os filtros locais
+    setFilters(emptyFilters); // Limpa os filtros globais
+  }, [setFilters]);
 
   return (
     <FiltersContainer>
@@ -93,6 +123,9 @@ export default function Filters() {
       <ApplyButton onClick={handleApplyFilters}>
         Aplicar Filtros
       </ApplyButton>
+      <ClearButton onClick={handleClearFilters}>
+        Limpar Filtros
+      </ClearButton>
     </FiltersContainer>
   );
 }
